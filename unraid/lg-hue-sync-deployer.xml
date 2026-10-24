@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>lg-hue-sync-deployer</Name>
+  <Repository>ghcr.io/cosmicflow2512/lg-hue-sync-deployer:latest</Repository>
+  <Registry>https://github.com/cosmicflow2512/lg-hue-sync-deployer/pkgs/container/lg-hue-sync-deployer</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/cosmicflow2512/lg-hue-sync-deployer/issues</Support>
+  <Project>https://github.com/cosmicflow2512/lg-hue-sync-deployer</Project>
+  <Overview>Baut adeze/lg-hue-sync (Philips-Hue-Entertainment-Ambilight fuer gerootete LG webOS TVs) fuer ARMv7/webOS 6, erkennt neue Upstream-Commits und sendet das Binary per Web-Button per SSH auf den TV. Erstinstallation, Update, Rollback und TV-Status ueber die Web-Oberflaeche.</Overview>
+  <Category>HomeAutomation: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8789]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/cosmicflow2512/lg-hue-sync-deployer/main/unraid/lg-hue-sync-deployer.xml</TemplateURL>
+  <Icon/>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <Config Name="WebUI Port" Target="8789" Default="8789" Mode="tcp" Description="Port der Web-Oberflaeche" Type="Port" Display="always" Required="true" Mask="false">8789</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/lg-hue-sync-deployer" Mode="rw" Description="Quellcode, Cargo-Cache, Build-Artefakte, SSH-Schluessel, Status" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/lg-hue-sync-deployer</Config>
+  <Config Name="TV IP" Target="TV_IP" Default="" Mode="" Description="IP des gerooteten LG TV" Type="Variable" Display="always" Required="true" Mask="false">192.168.20.90</Config>
+  <Config Name="TV SSH Port" Target="TV_SSH_PORT" Default="22" Mode="" Description="Root-SSH-Port des TV (Homebrew Channel)" Type="Variable" Display="always" Required="true" Mask="false">22</Config>
+  <Config Name="TV Dashboard Port" Target="TV_DASHBOARD_PORT" Default="8088" Mode="" Description="Port des lg-hue-sync-Dashboards auf dem TV (fuer Statusabfrage)" Type="Variable" Display="advanced" Required="false" Mask="false">8088</Config>
+  <Config Name="Update-Pruefintervall (Stunden)" Target="CHECK_INTERVAL_HOURS" Default="6" Mode="" Description="Wie oft Upstream auf neue Commits geprueft wird. 0 = aus" Type="Variable" Display="always" Required="false" Mask="false">6</Config>
+  <Config Name="Automatisch bauen" Target="AUTO_BUILD" Default="false" Mode="" Description="true = neue Upstream-Version automatisch bauen" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="Automatisch senden" Target="AUTO_DEPLOY" Default="false" Mode="" Description="true = nach automatischem Build direkt an den TV senden (nur wenn AUTO_BUILD=true)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="UI Token" Target="UI_TOKEN" Default="" Mode="" Description="Optional. Wenn gesetzt, WebUI mit ?k=TOKEN aufrufen" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Upstream Repo" Target="UPSTREAM_REPO" Default="https://github.com/adeze/lg-hue-sync.git" Mode="" Description="Git-Quelle von lg-hue-sync" Type="Variable" Display="advanced" Required="false" Mask="false">https://github.com/adeze/lg-hue-sync.git</Config>
+  <Config Name="Upstream Branch" Target="UPSTREAM_BRANCH" Default="main" Mode="" Description="Branch" Type="Variable" Display="advanced" Required="false" Mask="false">main</Config>
+  <Config Name="SSH Key Typ" Target="SSH_KEY_TYPE" Default="ed25519" Mode="" Description="ed25519 oder rsa (nur aendern, wenn der TV ed25519 ablehnt)" Type="Variable" Display="advanced" Required="false" Mask="false">ed25519</Config>
+</Container>

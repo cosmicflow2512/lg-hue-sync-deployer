@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LG Hue Sync Deployer</title>
+<style>
+  :root {
+    --bg: #0c0d0f; --panel: #15171a; --line: #262a30; --text: #e7e9ec; --muted: #8b929c;
+    --accent: #6cc4ff; --ok: #4fd18b; --warn: #f2b84b; --bad: #ff6b6b;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f4f5f7; --panel: #ffffff; --line: #dfe2e6; --text: #15171a; --muted: #5d6570;
+            --accent: #0a6fc2; --ok: #18884f; --warn: #a86b00; --bad: #c62828; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: .2px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; font-size: 13px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+  .kv span:nth-child(even) { font-family: var(--mono); overflow-wrap: anywhere; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  button { font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #04121d; font-weight: 600; }
+  button.danger { color: var(--bad); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  pre { margin: 0; font: 12px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #log { max-height: 420px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  ul.pending { margin: 0; padding-left: 18px; font-family: var(--mono); font-size: 12px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  input { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); min-width: 0; flex: 1; }
+  .wide { margin-top: 12px; }
+  #busy { font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>LG Hue Sync Deployer</h1>
+      <div class="sub" id="repo">-</div>
+    </div>
+    <div id="busy" class="muted">-</div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Upstream</h2>
+      <div class="kv">
+        <span>Status</span><span id="up-status">-</span>
+        <span>Remote</span><span id="up-remote">-</span>
+        <span>Geprüft</span><span id="up-checked">-</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Build</h2>
+      <div class="kv">
+        <span>Version</span><span id="b-version">-</span>
+        <span>Commit</span><span id="b-commit">-</span>
+        <span>SHA-256</span><span id="b-sha">-</span>
+        <span>Gebaut</span><span id="b-at">-</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>TV</h2>
+      <div class="kv">
+        <span>Adresse</span><span id="tv-ip">-</span>
+        <span>Dienst</span><span id="tv-service">-</span>
+        <span>Binary</span><span id="tv-match">-</span>
+        <span>Sync</span><span id="tv-sync">-</span>
+        <span>Geprüft</span><span id="tv-checked">-</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button data-job="check">Nach Updates suchen</button>
+    <button data-job="build">Holen &amp; bauen</button>
+    <button data-job="deploy_update" class="primary">Update an TV senden</button>
+    <button data-job="build_deploy">Bauen &amp; senden</button>
+    <button data-job="tv_status">TV-Status</button>
+    <button data-job="deploy_first" data-confirm="Erstinstallation: installiert Binary, Luna-Rechte, systemd-Dienst und Autostart-Hook auf dem TV. Fortfahren?">Erstinstallation</button>
+    <button data-job="rollback" class="danger" data-confirm="Vorherige Version auf dem TV wiederherstellen?">Rollback</button>
+  </div>
+
+  <div class="grid">
+    <section class="card" id="pending-card" hidden>
+      <h2>Neue Commits</h2>
+      <ul class="pending" id="pending"></ul>
+    </section>
+    <section class="card">
+      <h2>SSH-Zugang zum TV</h2>
+      <div class="sub">Öffentlicher Schlüssel dieses Containers. Einmal auf dem TV hinterlegen, per Passwort-Button oder vom Mac aus.</div>
+      <pre class="wide" id="pubkey">-</pre>
+      <div class="row">
+        <button id="copy-key">Schlüssel kopieren</button>
+        <button data-job="test_ssh">SSH testen</button>
+      </div>
+      <div class="row">
+        <input type="password" id="pw" placeholder="Root-Passwort des TV" autocomplete="off">
+        <button id="install-key">Key installieren</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="card wide" style="margin-top:12px">
+    <h2>Protokoll</h2>
+    <div id="log"><pre id="logtext"></pre></div>
+  </section>
+</main>
+<script>
+(function () {
+  var token = "";
+  try {
+    var q = new URLSearchParams(location.search).get("k");
+    if (q) { sessionStorage.setItem("deployer-token", q); }
+    token = sessionStorage.getItem("deployer-token") || "";
+  } catch (e) { token = new URLSearchParams(location.search).get("k") || ""; }
+
+  function headers(extra) {
+    var h = extra || {};
+    if (token) { h["X-Token"] = token; }
+    return h;
+  }
+  function $(id) { return document.getElementById(id); }
+  function short(s, n) { return s ? s.slice(0, n || 12) : "-"; }
+  function when(s) { return s ? s.replace("T", " ").replace(/[+-]\d{4}$/, "") : "-"; }
+  function badge(text, cls) { return '<span class="badge ' + cls + '">' + text + '</span>'; }
+
+  var lastBusy = null;
+
+  function render(s) {
+    var c = s.config || {};
+    $("repo").textContent = (c.repo || "") + " @ " + (c.branch || "");
+    $("busy").innerHTML = s.busy ? badge("läuft: " + s.busy, "warn")
+      : (s.last_job ? "zuletzt: " + s.last_job + " " + badge(s.last_result || "-", s.last_result === "ok" ? "ok" : "bad") : "bereit");
+
+    $("up-status").innerHTML = !s.remote_commit ? '<span class="muted">nicht geprüft</span>'
+      : (s.update_available ? badge("Update verfügbar", "warn") : badge("aktuell", "ok"));
+    $("up-remote").textContent = short(s.remote_commit);
+    $("up-checked").textContent = when(s.remote_checked_at);
+
+    $("b-version").textContent = s.built_version || "-";
+    $("b-commit").textContent = short(s.built_commit);
+    $("b-sha").textContent = short(s.built_sha256, 16);
+    $("b-at").textContent = when(s.built_at);
+
+    $("tv-ip").textContent = c.tv_ip ? c.tv_ip + " (ssh " + c.tv_ssh_port + ")" : "TV_IP fehlt";
+    var svc = s.tv_service || "";
+    $("tv-service").innerHTML = !s.tv_checked_at ? '<span class="muted">-</span>'
+      : (!s.tv_reachable ? badge("SSH nicht erreichbar", "bad")
+      : badge(svc || "-", svc === "active" ? "ok" : "bad"));
+    $("tv-match").innerHTML = !s.tv_sha256 ? '<span class="muted">' + (s.tv_checked_at ? "keins installiert" : "-") + '</span>'
+      : (s.tv_matches_build ? badge("= aktueller Build", "ok") : badge("abweichend " + short(s.tv_sha256, 10), "warn"));
+    var api = s.tv_api || {};
+    var sync = api.error ? '<span class="muted">Dashboard nicht erreichbar</span>'
+      : (api.pipeline_state ? api.pipeline_state + (api.is_syncing ? " " + badge("sync", "ok") : "") : "-");
+    $("tv-sync").innerHTML = sync;
+    $("tv-checked").textContent = when(s.tv_checked_at);
+
+    var pending = s.pending || [];
+    $("pending-card").hidden = pending.length === 0;
+    $("pending").innerHTML = pending.map(function (l) {
+      var d = document.createElement("li"); d.textContent = l; return d.outerHTML;
+    }).join("");
+
+    $("pubkey").textContent = s.pubkey || "-";
+    document.querySelectorAll("button[data-job], #install-key").forEach(function (b) { b.disabled = !!s.busy; });
+    lastBusy = s.busy;
+  }
+
+  function refresh() {
+    fetch("/api/state", { headers: headers() })
+      .then(function (r) { if (r.status === 401) { throw new Error("Token fehlt oder falsch (?k=...)"); } return r.json(); })
+      .then(render)
+      .catch(function (e) { $("busy").innerHTML = badge(e.message, "bad"); });
+  }
+  function refreshLog() {
+    fetch("/api/log", { headers: headers() }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
+      var box = $("log"), stick = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+      $("logtext").textContent = t;
+      if (stick) { box.scrollTop = box.scrollHeight; }
+    }).catch(function () {});
+  }
+  function job(name, body) {
+    return fetch("/api/job/" + name, {
+      method: "POST",
+      headers: headers({ "Content-Type": "application/json", "X-Requested-With": "deployer" }),
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (!res.ok) { alert(res.message || "Fehler"); }
+      refresh(); refreshLog();
+    });
+  }
+
+  document.querySelectorAll("button[data-job]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var msg = b.getAttribute("data-confirm");
+      if (msg && !confirm(msg)) { return; }
+      job(b.getAttribute("data-job"));
+    });
+  });
+  $("install-key").addEventListener("click", function () {
+    var pw = $("pw").value;
+    if (!pw) { alert("Passwort eingeben"); return; }
+    job("install_key", { password: pw }).then(function () { $("pw").value = ""; });
+  });
+  $("copy-key").addEventListener("click", function () {
+    var t = $("pubkey").textContent;
+    if (navigator.clipboard) { navigator.clipboard.writeText(t).catch(function () {}); }
+  });
+
+  refresh(); refreshLog();
+  setInterval(refresh, 3000);
+  setInterval(function () { if (lastBusy) { refreshLog(); } }, 1500);
+  setInterval(refreshLog, 15000);
+})();
+</script>
+</body>
+</html>
