@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import os
+import pwd
 import re
 import shutil
 import subprocess
@@ -171,6 +172,16 @@ def ensure_ssh():
                      "  ConnectTimeout 5\n"
                      "  ServerAliveInterval 15\n" % SSH_KEY)
     os.chmod(os.path.join(SSH_DIR, "config"), 0o600)
+    # OpenSSH ermittelt ~ ueber passwd (root -> /root), nicht ueber $HOME.
+    # Ohne diesen Link liest ssh weder /config/.ssh/config noch den Key noch known_hosts,
+    # und deploy.sh/make (rufen plain ssh auf) scheitern mit "Host key verification failed".
+    home_ssh = os.path.join(pwd.getpwuid(os.getuid()).pw_dir, ".ssh")
+    if os.path.realpath(home_ssh) != os.path.realpath(SSH_DIR):
+        if os.path.islink(home_ssh) or os.path.isfile(home_ssh):
+            os.remove(home_ssh)
+        elif os.path.isdir(home_ssh):
+            shutil.rmtree(home_ssh)
+        os.symlink(SSH_DIR, home_ssh)
 
 
 def public_key():
