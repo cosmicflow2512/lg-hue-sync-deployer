@@ -13,7 +13,7 @@
   <Category>HomeAutomation: Tools:</Category>
   <WebUI>http://[IP]:[PORT:8789]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/cosmicflow2512/lg-hue-sync-deployer/main/unraid/lg-hue-sync-deployer.xml</TemplateURL>
-  <Icon/>
+  <Icon>https://raw.githubusercontent.com/cosmicflow2512/lg-hue-sync-deployer/main/unraid/icon.png</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
